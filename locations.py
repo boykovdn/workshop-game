@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 import json
 import copy
+import cv2
+import pickle
+import matplotlib.pyplot as plt
+import matplotlib
 
 """
 DATA: "labels" column in dataframe contains a list of json disctionaries for every image. Each json dictionary contains information for an individual box (=parasite).
@@ -10,6 +14,17 @@ SERVER: Run and maintained by Filip Ayazi (fa344)
 """
 
 url_server = "https://filip.ayazi.sk/labeller/api.php?key=b7ca50e53329c&data&fbclid=IwAR3UNpOwXw3BaePHLMrsrKhKONRbx8AdbH7GOmYhEjA1P42jYqV3k44OUF0"
+images_dir = "./images"
+images_dir_labels = "./images_labels"
+colourmap = "tab10"
+colours = {}
+
+# Create colour palette
+cmap = plt.get_cmap(colourmap).colors
+for i in range(0, len(cmap)):
+	colours[str(i)]	= list(map(lambda a : int(a * 255), cmap[i]))
+	print(colours[str(i)])
+
 
 def load_labels(url=url_server, filename=None):
 	"""
@@ -86,14 +101,56 @@ def total_number_parasites(df):
 			
 	return df
 
+def label_image(df, loc, labels=True):
+	"""
+	INPUT: index location of image in dataframe
+	OUTPUT: image with boxes drawn in, if lebels=True
+	"""
+	imagename = df["filename"].iloc[loc]
+	img = cv2.imread(images_dir + "/" + imagename)
+	names = list(df.columns)
+	names = names[1:len(names)]
+	names = [name for name in names if "number" not in name]
+
+	if labels:
+		for i in range(0, len(names)):
+			name = names[i]
+			# Draw locations:
+			for json in df[name].iloc[loc]:
+				x1 = int(json["x1"])
+				y1 = int(json["y1"])
+				x2 = int(json["x2"])
+				y2 = int(json["y2"])
+				cv2.rectangle(img,(x1,y1), (x2,y2), colours[str(i)], 3)
+
+	return img
+		
+	
+def save_images_labelled(df):
+	#TODO
+	None
+
+def show_image(img):
+	#TODO
+	cv2.namedWindow("test", cv2.WINDOW_NORMAL)
+	cv2.imshow("test", img)
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
 
-df = select_from_dataframe(load_labels())
-df = people_to_cols(df)
-df = total_number_parasites(df)
-print(df)
+#df = select_from_dataframe(load_labels())
+#df = people_to_cols(df)
+#df = total_number_parasites(df)
+#pickle_out = open("dataframe_pickle","wb")
+#pickle.dump(df, pickle_out)
+#pickle_out.close()
 
+pickle_in = open("dataframe_pickle","rb")
+df = pickle.load(pickle_in)
+pickle_in.close()
 
+show_image(label_image(df, 10))
+#print(df)
 
 
 
