@@ -159,7 +159,12 @@ def show_image(img):
 	cv2.destroyAllWindows()
 
 def calculate_overlap():
-	#TODO
+	"""
+	INPUT: Dataframe, formatted, that contains information about labels from multiple people.
+	OUTPUT: Dataframe with new rows that represent all the unique locations that could contain a parasite, and how many people have labelled them.
+	"""
+	#TODO Description to say about final format of output df
+	#TODO Code
 	None
 
 #df = select_from_dataframe(load_labels())
