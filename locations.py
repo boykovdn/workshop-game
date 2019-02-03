@@ -60,11 +60,13 @@ def select_from_dataframe(df, select_rows=["filename", "labels"]):
 
 def people_to_cols(df):
 	names = []
-	print("Found data from:\n")
+	print("Found data from:")
 	for label in df["labels"].iloc[0]:
 		if label["username"] not in names:
 			names.append(label["username"])
 			print(label["username"])
+
+	print("\n")
 
 	labels_from_name_init = {}
 	for name in names:
@@ -131,25 +133,30 @@ def save_images_labelled(df):
 	None
 
 def show_image(img):
-	#TODO
+	"""
+	Displays image
+	"""
 	cv2.namedWindow("test", cv2.WINDOW_NORMAL)
 	cv2.imshow("test", img)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
 
+def calculate_overlap():
+	#TODO
+	None
 
-#df = select_from_dataframe(load_labels())
-#df = people_to_cols(df)
-#df = total_number_parasites(df)
+df = select_from_dataframe(load_labels())
+df = people_to_cols(df)
+df = total_number_parasites(df)
 #pickle_out = open("dataframe_pickle","wb")
 #pickle.dump(df, pickle_out)
 #pickle_out.close()
 
-pickle_in = open("dataframe_pickle","rb")
-df = pickle.load(pickle_in)
-pickle_in.close()
-
-show_image(label_image(df, 10))
+#pickle_in = open("dataframe_pickle","rb")
+#df = pickle.load(pickle_in)
+#pickle_in.close()
+#
+#show_image(label_image(df, 10))
 #print(df)
 
 
