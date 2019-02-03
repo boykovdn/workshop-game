@@ -6,6 +6,7 @@ import cv2
 import pickle
 import matplotlib.pyplot as plt
 import matplotlib
+import os
 
 """
 DATA: "labels" column in dataframe contains a list of json disctionaries for every image. Each json dictionary contains information for an individual box (=parasite).
@@ -128,9 +129,25 @@ def label_image(df, loc, labels=True):
 	return img
 		
 	
-def save_images_labelled(df):
-	#TODO
-	None
+def save_images_labelled(df, target_dir=images_dir_labels):
+	"""
+	INPUT: Dataframe of images and boxes (Final version, after formatting)
+	OUTPUT: None, write images with drawn boxes into target_dir. Overwrites previous contents. If target_dir does not exist, creates it.
+	"""
+
+	if os.path.exists(target_dir):
+		if os.listdir(target_dir) == []:
+			number_of_images = df.index.size
+			print(target_dir + " empty, nothing will be overwritten.")
+			for loc in range(0, number_of_images):
+				cv2.imwrite(df["filename"].iloc[loc], label_image(df, loc))
+				print("[" + str(loc) + "/" + str(number_of_images-1)  + "] Copy " + df['filename'].iloc[loc] + "to " + target_dir)
+		else:
+			number_of_images = df.index.size	
+			print(target_dir + "non-empty, overwriting conflicts")
+			for loc in range(0, number_of_images):
+				cv2.imwrite(df["filename"].iloc[loc], label_image(df, loc))
+				print("[" + str(loc) + "/" + str(number_of_images-1)  + "] Copy " + df['filename'].iloc[loc] + "to " + target_dir)
 
 def show_image(img):
 	"""
@@ -145,16 +162,18 @@ def calculate_overlap():
 	#TODO
 	None
 
-df = select_from_dataframe(load_labels())
-df = people_to_cols(df)
-df = total_number_parasites(df)
+#df = select_from_dataframe(load_labels())
+#df = people_to_cols(df)
+#df = total_number_parasites(df) # Final version of dataframe
 #pickle_out = open("dataframe_pickle","wb")
 #pickle.dump(df, pickle_out)
 #pickle_out.close()
 
-#pickle_in = open("dataframe_pickle","rb")
-#df = pickle.load(pickle_in)
-#pickle_in.close()
+pickle_in = open("dataframe_pickle","rb")
+df = pickle.load(pickle_in)
+pickle_in.close()
+
+save_images_labelled(df)
 #
 #show_image(label_image(df, 10))
 #print(df)
