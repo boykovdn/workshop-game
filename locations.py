@@ -19,6 +19,8 @@ images_dir = "./images"
 images_dir_labels = "./images_labels"
 colourmap = "tab10"
 colours = {}
+dataframe_pickle_people_name = "dataframe_people.pickle"
+dataframe_pickle_labels_name = "dataframe_labels.pickle"
 
 # Create colour palette
 cmap = plt.get_cmap(colourmap).colors
@@ -50,7 +52,7 @@ def load_labels(url=url_server, filename=None):
 
 def select_from_dataframe(df, select_rows=["filename", "labels"]):
 	"""
-	INPUT: Dataframe to be worked on, rows to selecto
+	INPUT: Dataframe to be worked on, rows to select
 	OUTPUT: Dataframe modified to contain only selected rows
 	"""
 	df_new = pd.DataFrame()
@@ -158,27 +160,49 @@ def show_image(img):
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
 
-def calculate_overlap():
+def calculate_overlap(df):
 	"""
 	INPUT: Dataframe, formatted, that contains information about labels from multiple people.
 	OUTPUT: Dataframe with new rows that represent all the unique locations that could contain a parasite, and how many people have labelled them.
 	"""
 	#TODO Description to say about final format of output df
-	#TODO Code
-	None
+	for i in range(0, df.index.size):
+		None	
 
-#df = select_from_dataframe(load_labels())
-#df = people_to_cols(df)
-#df = total_number_parasites(df) # Final version of dataframe
-#pickle_out = open("dataframe_pickle","wb")
-#pickle.dump(df, pickle_out)
-#pickle_out.close()
+	print(df)
+
+
+def update_pickled_dataframe(outname):
+	"""
+	Updates the local pickle of the dataframe, you can choose which one - there can be multiple that have different formats, and used for different parts of the script
+	"""
+	if outname == dataframe_pickle_people_name:
+		df = select_from_dataframe(load_labels())
+		df = people_to_cols(df)
+		df = total_number_parasites(df) # Final version of dataframe
+
+	elif outname == dataframe_pickle_labels_name:
+		df = select_from_dataframe(load_labels())
+	
+	else:
+		print("ERROR: Did not recognise pickle name, did nothing!")
+		
+	pickle_out = open(outname,"wb")
+	pickle.dump(df, pickle_out)
+	pickle_out.close()
+	print("Updated pickle " + outname)
+
+
+# Run to update from server
+#update_pickled_dataframe(dataframe_pickle_people_name)
+#update_pickled_dataframe(dataframe_pickle_labels_name)
 
 pickle_in = open("dataframe_pickle","rb")
 df = pickle.load(pickle_in)
 pickle_in.close()
 
-save_images_labelled(df)
+#calculate_overlap(df)
+#save_images_labelled(df)
 #
 #show_image(label_image(df, 10))
 #print(df)
