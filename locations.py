@@ -144,7 +144,7 @@ def save_images_labelled(df, target_dir=images_dir_labels):
 				print("[" + str(loc) + "/" + str(number_of_images-1)  + "] Copy " + df['filename'].iloc[loc] + " to " + target_dir)
 		else:
 			number_of_images = df.index.size	
-			print(target_dir + "non-empty, overwriting conflicts")
+			print(target_dir + " non-empty, overwriting conflicts")
 			for loc in range(0, number_of_images):
 				cv2.imwrite(target_dir + "/" + df["filename"].iloc[loc], label_image(df, loc))
 				print("[" + str(loc) + "/" + str(number_of_images-1)  + "] Copy " + df['filename'].iloc[loc] + " to " + target_dir)
