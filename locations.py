@@ -192,14 +192,27 @@ def update_pickled_dataframe(outname):
 	pickle_out.close()
 	print("Updated pickle " + outname)
 
+def load_pickle(inname):
+	"""
+	Load dataframe that is locally pickled
+	"""
+	if inname not in [dataframe_pickle_people_name,
+					  dataframe_pickle_labels_name]:
+		raise Exception("{} not in standard dataframe names".format(inname))
 
-# Run to update from server
+	pickle_in = open(inname, "rb")
+	df = pickle.load(pickle_in)
+	pickle_in.close()
+	print("Loaded {}".format(inname))
+
+	return df
+
+# Run to update local pickled dataframes from server
 #update_pickled_dataframe(dataframe_pickle_people_name)
 #update_pickled_dataframe(dataframe_pickle_labels_name)
 
-pickle_in = open("dataframe_pickle","rb")
-df = pickle.load(pickle_in)
-pickle_in.close()
+# Load from local - quicker
+df = load_pickle(dataframe_pickle_labels_name)
 
 #calculate_overlap(df)
 #save_images_labelled(df)
