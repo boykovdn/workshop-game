@@ -24,9 +24,10 @@ dataframe_pickle_labels_name = "dataframe_labels.pickle"
 
 # Create colour palette
 cmap = plt.get_cmap(colourmap).colors
+print("Loading rectangle colour palette:")
 for i in range(0, len(cmap)):
 	colours[str(i)]	= list(map(lambda a : int(a * 255), cmap[i]))
-	print(colours[str(i)])
+	print("Colour {} {}".format(i,colours[str(i)]))
 
 
 def load_labels(url=url_server, filename=None):
@@ -208,19 +209,15 @@ def load_pickle(inname):
 	return df
 
 # Run to update local pickled dataframes from server
-#update_pickled_dataframe(dataframe_pickle_people_name)
-#update_pickled_dataframe(dataframe_pickle_labels_name)
+update_pickled_dataframe(dataframe_pickle_people_name)
+update_pickled_dataframe(dataframe_pickle_labels_name)
 
 # Load from local - quicker
-df = load_pickle(dataframe_pickle_labels_name)
+#df = load_pickle(dataframe_pickle_labels_name)
 
 #calculate_overlap(df)
 #save_images_labelled(df)
 #
 #show_image(label_image(df, 10))
 #print(df)
-
-
-
-
 
