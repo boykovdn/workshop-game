@@ -215,17 +215,22 @@ def calculate_overlap(df, image_number):
 	labels_all = df["labels"].iloc[image_number]
 	for i in range(0, len(labels_all)):
 		label_lists.append([labels_all[i]])
-	
+
+	box = 0	
 	while label_lists != []:	
 		counter = 1
 		while counter < len(label_lists):
 			if overlap_test(label_lists[0], label_lists[counter]):
 				label_lists[0] = label_lists[0] + label_lists[counter]
+				print("OVERLAP")
 				label_lists.pop(counter)
+				counter = 1 # Restart counter because new addition to set might overlap with images that the previous members of the set did not overlap with.
 			else:
 				counter += 1 # Do not increment counter if element popped, otherwise will miss one! After pop everything moves an index down.
 
 		final_lists.append(label_lists.pop(0))
+		box += 1
+		print("Add box {}".format(box))
 		counter = 1
 	return final_lists
 
