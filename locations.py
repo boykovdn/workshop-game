@@ -216,7 +216,6 @@ def calculate_overlap(df, image_number):
 	for i in range(0, len(labels_all)):
 		label_lists.append([labels_all[i]])
 	
-	boxes = 0
 	while label_lists != []:	
 		counter = 1
 		while counter < len(label_lists):
@@ -228,7 +227,6 @@ def calculate_overlap(df, image_number):
 
 		final_lists.append(label_lists.pop(0))
 		counter = 1
-		boxes += 1
 	return final_lists
 
 
@@ -331,16 +329,16 @@ def save_images_loi(df):
 
 # Load from local - quicker
 df = load_pickle(dataframe_pickle_labels_name)
-save_images_loi(df)
-
+#save_images_loi(df)
+print(df)
 #print(df)
-#overlaps = calculate_overlap(df, 12)
+overlaps = calculate_overlap(df, 0)
 #for overlap in overlaps:
 #	show_image(label_image(df, 0, labels=overlap))
-#big_boxes = []
-#for overlap in overlaps:
-#	big_boxes.append(smallest_bounding_box(overlap))
-#show_image(label_image(df, 12, labels=big_boxes, confidence=True))
+big_boxes = []
+for overlap in overlaps:
+	big_boxes.append(smallest_bounding_box(overlap))
+show_image(label_image(df, 0, labels=big_boxes))
 #print(len(calculate_overlap(df, 0)))
 #save_images_labelled(df)
 #
