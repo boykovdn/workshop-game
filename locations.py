@@ -168,8 +168,7 @@ def overlap_test(label_list1, label_list2):
 	"""
 	for label1 in label_list1:
 		for label2 in label_list2:
-			print(label1, label2)
-			if int(label1["y2"]) <= int(label2["y1"]) and int(label1["x1"] <= label2["x2"]) and int(label1["x2"] >= label2["x1"]) and int(label1["y1"] >= label2["y2"]):
+			if ((int(label1["y2"]) <= int(label2["y1"])) and (int(label1["x1"]) <= int(label2["x2"])) and (int(label1["x2"]) >= int(label2["x1"])) and (int(label1["y1"]) >= int(label2["y2"]))) or ((int(label1["y2"]) > int(label2["y1"])) and (int(label1["x1"]) > int(label2["x2"])) and (int(label1["x2"]) < int(label2["x1"])) and (int(label1["y1"]) < int(label2["y2"]))):
 				return True
 	return False
 
@@ -185,21 +184,18 @@ def calculate_overlap(df, image_number):
 	labels_all = df["labels"].iloc[image_number]
 	for i in range(0, len(labels_all)):
 		label_lists.append([labels_all[i]])
-	
 
 	while label_lists != []:	
 		counter = 1
-		label_list_current = label_lists[0]
 		while counter < len(label_lists):
-			if overlap_test(label_list_current, label_lists[counter]):
+			if overlap_test(label_lists[0], label_lists[counter]):
 				print("OVERLAP")
-				label_list_current.append(label_lists[counter])
+				label_lists[0] = label_lists[0] + label_lists[counter]
 				label_lists.pop(counter)
-				print("Rmove")
 			counter += 1	
 		final_lists.append(label_lists.pop(0))
 		counter = 1
-	print(final_lists)	
+		print("Back to 1")
 	return final_lists
 
 
@@ -245,7 +241,11 @@ def load_pickle(inname):
 # Load from local - quicker
 df = load_pickle(dataframe_pickle_labels_name)
 
-print(calculate_overlap(df, 115))
+calculate_overlap(df, 102)
 #save_images_labelled(df)
 #
-#show_image(label_image(df, 110))
+label1 = df["labels"].iloc[102][1]
+label2 = df["labels"].iloc[102][5]
+print("label1 {}\nlabel2 {}".format(label1, label2))
+print(overlap_test([label1], [label2]))
+show_image(label_image(df, 102))
