@@ -21,6 +21,7 @@ colourmap = "tab10"
 colours = {}
 dataframe_pickle_people_name = "dataframe_people.pickle"
 dataframe_pickle_labels_name = "dataframe_labels.pickle"
+images_location_interest = "./images_location_interest"
 
 # Create colour palette
 cmap = plt.get_cmap(colourmap).colors
@@ -107,7 +108,7 @@ def total_number_parasites(df):
 			
 	return df
 
-def label_image(df, loc, labels=[]):
+def label_image(df, loc, labels=[], confidence=False):
 	"""
 	INPUT: index location of image in dataframe
 	OUTPUT: image with boxes drawn in, if lebels=True
@@ -119,6 +120,7 @@ def label_image(df, loc, labels=[]):
 	names = [name for name in names if "number" not in name]
 
 	if labels == []:
+		print("Labelling individual people's boxes with different colours")
 		for i in range(0, len(names)):
 			name = names[i]
 			# Draw locations:
@@ -129,20 +131,41 @@ def label_image(df, loc, labels=[]):
 				y2 = int(json["y2"])
 				cv2.rectangle(img,(x1,y1), (x2,y2), colours[str(i)], 3)
 	else:
-		print("Labelling image from passed labels...")
+		print("Labelling image from passed labels, likely single areas of interest...")
+		if confidence:
+			names = []
+			font = cv2.FONT_HERSHEY_SIMPLEX
+			fontScale = 1
+			lineType = 2
+			for json in df["labels"].iloc[loc]:
+				for bounding_box_name in json["username"].split(","):
+					if bounding_box_name not in names:
+						print(names)
+						names.append(bounding_box_name)
+
 		for json in labels:
 			x1 = int(json["x1"])
 			y1 = int(json["y1"])
 			x2 = int(json["x2"])
 			y2 = int(json["y2"])
 			cv2.rectangle(img,(x1,y1), (x2,y2), colours[str(1)], 3)
+			if confidence:
+				bottomLeftCornerOfText = (x1, y1 - 10)
+				fontColor = colours[str(1)]
+				print("WARNING: Confidence for each location still not working properly! You will get weird numbers for bounding boxes.") # TODO
+				text_confidence = "{}/{}".format(len(json["username"].split(",")), len(names))
+				cv2.putText(img, text_confidence,
+							bottomLeftCornerOfText,
+							font,
+							fontScale,
+							fontColor,
+							lineType)
 	
 	return img
 		
 	
 def save_images_labelled(df, target_dir=images_dir_labels):
-	"""
-	INPUT: Dataframe of images and boxes (Final version, after formatting)
+	""" INPUT: Dataframe of images and boxes (Final version, after formatting)
 	OUTPUT: None, write images with drawn boxes into target_dir. Overwrites previous contents. If target_dir does not exist, creates it.
 	"""
 
@@ -198,7 +221,6 @@ def calculate_overlap(df, image_number):
 		counter = 1
 		while counter < len(label_lists):
 			if overlap_test(label_lists[0], label_lists[counter]):
-				print("OVERLAP")
 				label_lists[0] = label_lists[0] + label_lists[counter]
 				label_lists.pop(counter)
 			else:
@@ -207,7 +229,6 @@ def calculate_overlap(df, image_number):
 		final_lists.append(label_lists.pop(0))
 		counter = 1
 		boxes += 1
-		print("Added box {}".format(boxes))
 	return final_lists
 
 
@@ -277,24 +298,50 @@ def smallest_bounding_box(labels):
 		
 	return box
 
+def save_images_loi(df):
+	"""
+	INPUT: Dataframe with label information (labels)
+	OUTPUT: void, save locations of interest to local folder
+	"""
+
+	print("Saving bounding boxes as images in local dir...")
+	with open("./{}/locations.json".format(images_location_interest), "w+") as json_output:
+		for i in range(0, df.index.size):
+			counter = 0
+			overlaps = calculate_overlap(df, i)
+			bounding_boxes = []
+			for overlap in overlaps:
+				bounding_box = smallest_bounding_box(overlap)
+				x1 = int(bounding_box["x1"])
+				y1 = int(bounding_box["y1"])
+				x2 = int(bounding_box["x2"])
+				y2 = int(bounding_box["y2"])
+				img = cv2.imread("./{}/{}".format(images_dir, df["filename"].iloc[i]))
+				filename = "./{}/{}_{}.jpg".format(images_location_interest, df["filename"].iloc[i].split(".")[0], str(counter))
+				cv2.imwrite(filename, img[y1:y2,x1:x2])
+				print("Saved {}".format(filename))
+				json_output.write(json.dumps(bounding_box))
+				counter += 1
+		
+			
+
 # Run to update local pickled dataframes from server
 #update_pickled_dataframe(dataframe_pickle_people_name)
 #update_pickled_dataframe(dataframe_pickle_labels_name)
 
 # Load from local - quicker
 df = load_pickle(dataframe_pickle_labels_name)
+save_images_loi(df)
 
-print(df)
-overlaps = calculate_overlap(df, 12)
+#print(df)
+#overlaps = calculate_overlap(df, 12)
 #for overlap in overlaps:
 #	show_image(label_image(df, 0, labels=overlap))
-big_boxes = []
-for overlap in overlaps:
-	big_boxes.append(smallest_bounding_box(overlap))
-show_image(label_image(df, 12, labels=big_boxes))
+#big_boxes = []
+#for overlap in overlaps:
+#	big_boxes.append(smallest_bounding_box(overlap))
+#show_image(label_image(df, 12, labels=big_boxes, confidence=True))
 #print(len(calculate_overlap(df, 0)))
 #save_images_labelled(df)
 #
-label1 = df["labels"].iloc[102][1]
-label2 = df["labels"].iloc[102][5]
 #show_image(label_image(df, 0))
