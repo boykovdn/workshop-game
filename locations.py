@@ -107,7 +107,7 @@ def total_number_parasites(df):
 			
 	return df
 
-def label_image(df, loc, labels=True):
+def label_image(df, loc, labels=[]):
 	"""
 	INPUT: index location of image in dataframe
 	OUTPUT: image with boxes drawn in, if lebels=True
@@ -118,7 +118,7 @@ def label_image(df, loc, labels=True):
 	names = names[1:len(names)]
 	names = [name for name in names if "number" not in name]
 
-	if labels:
+	if labels == []:
 		for i in range(0, len(names)):
 			name = names[i]
 			# Draw locations:
@@ -128,7 +128,15 @@ def label_image(df, loc, labels=True):
 				x2 = int(json["x2"])
 				y2 = int(json["y2"])
 				cv2.rectangle(img,(x1,y1), (x2,y2), colours[str(i)], 3)
-
+	else:
+		print("Labelling image from passed labels...")
+		for json in labels:
+			x1 = int(json["x1"])
+			y1 = int(json["y1"])
+			x2 = int(json["x2"])
+			y2 = int(json["y2"])
+			cv2.rectangle(img,(x1,y1), (x2,y2), colours[str(i)], 3)
+	
 	return img
 		
 	
@@ -168,7 +176,7 @@ def overlap_test(label_list1, label_list2):
 	"""
 	for label1 in label_list1:
 		for label2 in label_list2:
-			if ((int(label1["y2"]) <= int(label2["y1"])) and (int(label1["x1"]) <= int(label2["x2"])) and (int(label1["x2"]) >= int(label2["x1"])) and (int(label1["y1"]) >= int(label2["y2"]))) or ((int(label1["y2"]) > int(label2["y1"])) and (int(label1["x1"]) > int(label2["x2"])) and (int(label1["x2"]) < int(label2["x1"])) and (int(label1["y1"]) < int(label2["y2"]))):
+			if (int(label1["y2"]) >= int(label2["y1"])) and (int(label1["x1"]) <= int(label2["x2"])) and (int(label1["x2"]) >= int(label2["x1"])) and (int(label1["y1"]) <= int(label2["y2"])):
 				return True
 	return False
 
@@ -234,6 +242,37 @@ def load_pickle(inname):
 
 	return df
 
+def smallest_bounding_box(labels):
+	"""
+	INPUT: Set of labels (rectangles) in json format
+	OUTPUT: json in same format, containing xy coordinates of the smallest rectangle that bounds all of the boxes
+	"""
+	x2_biggest = int(labels[0]["x2"])
+	x1_smallest = int(labels[0]["x1"])
+	y2_biggest = int(labels[0]["y2"])
+	y1_smallest = int(labels[0]["y1"])
+	for json in labels:
+		if int(json["x1"]) < x1_smallest:
+			x1_smallest = int(json["x1"])
+		if int(json["y1"]) < y1_smallest:
+			y1_smallest = int(json["y1"])
+		if int(json["x2"]) > x2_biggest:
+			x2_biggest = int(json["x2"])
+		if int(json["y2"]) > y2_biggest:
+			y2_biggest = int(json["y2"])
+
+	box = labels[0]
+	for i in range(1,len(labels)):
+		for tag in labels[i].keys():
+			box[tag] = box[tag] + "," + labels[i][tag]
+
+	box["x1"] = str(x1_smallest)
+	box["y1"] = str(y1_smallest)
+	box["x2"] = str(x2_biggest)
+	box["y2"] = str(y2_biggest)
+		
+	print(labels[0])
+
 # Run to update local pickled dataframes from server
 #update_pickled_dataframe(dataframe_pickle_people_name)
 #update_pickled_dataframe(dataframe_pickle_labels_name)
@@ -241,11 +280,10 @@ def load_pickle(inname):
 # Load from local - quicker
 df = load_pickle(dataframe_pickle_labels_name)
 
-calculate_overlap(df, 102)
+print(len(calculate_overlap(df, 0)))
 #save_images_labelled(df)
 #
 label1 = df["labels"].iloc[102][1]
 label2 = df["labels"].iloc[102][5]
-print("label1 {}\nlabel2 {}".format(label1, label2))
-print(overlap_test([label1], [label2]))
-show_image(label_image(df, 102))
+smallest_bounding_box([label1,label2])
+#show_image(label_image(df, 0))
