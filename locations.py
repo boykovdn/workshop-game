@@ -135,7 +135,7 @@ def label_image(df, loc, labels=[]):
 			y1 = int(json["y1"])
 			x2 = int(json["x2"])
 			y2 = int(json["y2"])
-			cv2.rectangle(img,(x1,y1), (x2,y2), colours[str(i)], 3)
+			cv2.rectangle(img,(x1,y1), (x2,y2), colours[str(1)], 3)
 	
 	return img
 		
@@ -188,11 +188,12 @@ def calculate_overlap(df, image_number):
 	#TODO Return a proper dataframe
 	# Should be close to Kruskal's algorithm, but unweighted graph
 	final_lists = []
-	label_lists = []
+	label_lists = [] # Disjoint set
 	labels_all = df["labels"].iloc[image_number]
 	for i in range(0, len(labels_all)):
 		label_lists.append([labels_all[i]])
-
+	
+	boxes = 0
 	while label_lists != []:	
 		counter = 1
 		while counter < len(label_lists):
@@ -200,10 +201,13 @@ def calculate_overlap(df, image_number):
 				print("OVERLAP")
 				label_lists[0] = label_lists[0] + label_lists[counter]
 				label_lists.pop(counter)
-			counter += 1	
+			else:
+				counter += 1 # Do not increment counter if element popped, otherwise will miss one! After pop everything moves an index down.
+
 		final_lists.append(label_lists.pop(0))
 		counter = 1
-		print("Back to 1")
+		boxes += 1
+		print("Added box {}".format(boxes))
 	return final_lists
 
 
@@ -271,7 +275,7 @@ def smallest_bounding_box(labels):
 	box["x2"] = str(x2_biggest)
 	box["y2"] = str(y2_biggest)
 		
-	print(labels[0])
+	return box
 
 # Run to update local pickled dataframes from server
 #update_pickled_dataframe(dataframe_pickle_people_name)
@@ -280,10 +284,17 @@ def smallest_bounding_box(labels):
 # Load from local - quicker
 df = load_pickle(dataframe_pickle_labels_name)
 
-print(len(calculate_overlap(df, 0)))
+print(df)
+overlaps = calculate_overlap(df, 12)
+#for overlap in overlaps:
+#	show_image(label_image(df, 0, labels=overlap))
+big_boxes = []
+for overlap in overlaps:
+	big_boxes.append(smallest_bounding_box(overlap))
+show_image(label_image(df, 12, labels=big_boxes))
+#print(len(calculate_overlap(df, 0)))
 #save_images_labelled(df)
 #
 label1 = df["labels"].iloc[102][1]
 label2 = df["labels"].iloc[102][5]
-smallest_bounding_box([label1,label2])
 #show_image(label_image(df, 0))
