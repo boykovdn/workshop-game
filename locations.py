@@ -148,7 +148,6 @@ def label_image(df, loc, labels=[], confidence=False):
 			for json in df["labels"].iloc[loc]:
 				for bounding_box_name in json["username"].split(","):
 					if bounding_box_name not in names:
-						print(names)
 						names.append(bounding_box_name)
 
 		for json in labels:
@@ -160,8 +159,14 @@ def label_image(df, loc, labels=[], confidence=False):
 			if confidence:
 				bottomLeftCornerOfText = (x1, y1 - 10)
 				fontColor = colours[str(1)]
-				print("WARNING: Confidence for each location still not working properly! You will get weird numbers for bounding boxes.") # TODO
-				text_confidence = "{}/{}".format(len(json["username"].split(",")), len(names))
+
+				#TODO Further segment parasites into precise locations
+				names_unique = [] # Removes multiple occurences of a name (for many parasites within the box). Unnecessary if parasites further segmented to smaller boxes.
+				for name in json["username"].split(","):
+					if name not in names_unique:
+						names_unique.append(name)
+
+				text_confidence = "{}/{}".format(len(names_unique), len(names))
 				cv2.putText(img, text_confidence,
 							bottomLeftCornerOfText,
 							font,
@@ -333,23 +338,34 @@ def save_images_loi(df):
 				counter += 1
 		
 			
+def _test_confidence_scores():
+	df = load_pickle(dataframe_pickle_labels_name)
+	for i in range(0, df.index.size):
+		overlaps = calculate_overlap(df, i)
+		big_boxes = []
+		for overlap in overlaps:
+			big_boxes.append(smallest_bounding_box(overlap))
+		show_image(label_image(df, i, labels=big_boxes, confidence=True))
 
 # Run to update local pickled dataframes from server
 #update_pickled_dataframe(dataframe_pickle_people_name)
 #update_pickled_dataframe(dataframe_pickle_labels_name)
 
 # Load from local - quicker
-df = load_pickle(dataframe_pickle_labels_name)
+#df = load_pickle(dataframe_pickle_labels_name)
 #save_images_loi(df)
 #print(df)
 #print(df)
-overlaps = calculate_overlap(df, 0)
+#overlaps = calculate_overlap(df, 2)
 #for overlap in overlaps:
 #	show_image(label_image(df, 0, labels=overlap))
-big_boxes = []
-for overlap in overlaps:
-	big_boxes.append(smallest_bounding_box(overlap))
-show_image(label_image(df, 0, labels=big_boxes))
+#big_boxes = []
+#for overlap in overlaps:
+#	big_boxes.append(smallest_bounding_box(overlap))
+#show_image(label_image(df, 2, labels=big_boxes, confidence=True))
 #print(len(calculate_overlap(df, 0)))
 #save_images_labelled(df)
 #
+
+_test_confidence_scores()
+
