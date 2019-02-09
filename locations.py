@@ -64,21 +64,29 @@ def select_from_dataframe(df, select_rows=["filename", "labels"]):
 	return df_new
 
 def people_to_cols(df):
-	names = []
-	print("Found data from:")
-	for label in df["labels"].iloc[0]:
-		if label["username"] not in names:
-			names.append(label["username"])
-			print(label["username"])
+	names_number_images = {}
+	for loc in range(0, df.index.size):
+		operator_names_unique = []
+		for label in df["labels"].iloc[loc]:
+			if label["username"] not in operator_names_unique:
+				operator_names_unique.append(label["username"])
+		for name in operator_names_unique:
+			if name not in names_number_images.keys():
+				names_number_images[name] = 1
+			else:
+				names_number_images[name] += 1
 
-	print("\n")
+	print("Found data from:")
+	names = list(names_number_images.keys())
+	for name in names:
+		print("{} {}/{}".format(name, names_number_images[name], df.index.size))
 
 	labels_from_name_init = {}
 	for name in names:
-		df[name] = np.nan
+		df[name] = [[] for i in range(0, df.index.size)]
 		labels_from_name_init[name] = []
 
-	labels_from_name = copy.deepcopy(labels_from_name_init.copy())
+	labels_from_name = labels_from_name_init.copy()
 	for i in range(0, df.index.size):
 		for json in df["labels"].iloc[i]:
 			for name in names:
@@ -235,13 +243,14 @@ def update_pickled_dataframe(outname):
 	"""
 	Updates the local pickle of the dataframe, you can choose which one - there can be multiple that have different formats, and used for different parts of the script
 	"""
+	df_initial = load_labels()
 	if outname == dataframe_pickle_people_name:
-		df = select_from_dataframe(load_labels())
+		df = select_from_dataframe(df_initial)
 		df = people_to_cols(df)
 		df = total_number_parasites(df) # Final version of dataframe
 
 	elif outname == dataframe_pickle_labels_name:
-		df = select_from_dataframe(load_labels())
+		df = select_from_dataframe(df_initial)
 	
 	else:
 		print("ERROR: Did not recognise pickle name, did nothing!")
@@ -319,6 +328,7 @@ def save_images_loi(df):
 				filename = "./{}/{}_{}.jpg".format(images_location_interest, df["filename"].iloc[i].split(".")[0], str(counter))
 				cv2.imwrite(filename, img[y1:y2,x1:x2])
 				print("Saved {}".format(filename))
+				#TODO Format json filename
 				json_output.write(json.dumps(bounding_box))
 				counter += 1
 		
@@ -330,17 +340,16 @@ def save_images_loi(df):
 
 # Load from local - quicker
 df = load_pickle(dataframe_pickle_labels_name)
-save_images_loi(df)
+#save_images_loi(df)
 #print(df)
 #print(df)
-#overlaps = calculate_overlap(df, 0)
+overlaps = calculate_overlap(df, 0)
 #for overlap in overlaps:
 #	show_image(label_image(df, 0, labels=overlap))
-#big_boxes = []
-#for overlap in overlaps:
-#	big_boxes.append(smallest_bounding_box(overlap))
-#show_image(label_image(df, 0, labels=big_boxes))
+big_boxes = []
+for overlap in overlaps:
+	big_boxes.append(smallest_bounding_box(overlap))
+show_image(label_image(df, 0, labels=big_boxes))
 #print(len(calculate_overlap(df, 0)))
 #save_images_labelled(df)
 #
-#show_image(label_image(df, 0))
