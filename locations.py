@@ -361,25 +361,35 @@ def _write_confidence_images(outdir="./images_confidence_score"):
 		cv2.imwrite(write_to, img)
 		print("Wrote {}".format(write_to))
 
-# Run to update local pickled dataframes from server
-#update_pickled_dataframe(dataframe_pickle_people_name)
-#update_pickled_dataframe(dataframe_pickle_labels_name)
+def _get_linear_plot():
+	df = load_pickle(dataframe_pickle_people_name)
+	print(df)
 
-# Load from local - quicker
-#df = load_pickle(dataframe_pickle_labels_name)
-#save_images_loi(df)
-#print(df)
-#overlaps = calculate_overlap(df, 2)
-#for overlap in overlaps:
-#	show_image(label_image(df, 0, labels=overlap))
-#big_boxes = []
-#for overlap in overlaps:
-#	big_boxes.append(smallest_bounding_box(overlap))
-#show_image(label_image(df, 2, labels=big_boxes, confidence=True))
-#print(len(calculate_overlap(df, 0)))
-#save_images_labelled(df)
-#
+def main():
+	#_get_linear_plot()
+	
+	# Run to update local pickled dataframes from server
+	update_pickled_dataframe(dataframe_pickle_people_name)
+	update_pickled_dataframe(dataframe_pickle_labels_name)
+	
+	# Load from local - quicker
+	#df = load_pickle(dataframe_pickle_labels_name)
+	#save_images_loi(df)
+	#print(df)
+	#overlaps = calculate_overlap(df, 2)
+	#for overlap in overlaps:
+	#	show_image(label_image(df, 0, labels=overlap))
+	#big_boxes = []
+	#for overlap in overlaps:
+	#	big_boxes.append(smallest_bounding_box(overlap))
+	#show_image(label_image(df, 2, labels=big_boxes, confidence=True))
+	#print(len(calculate_overlap(df, 0)))
+	#save_images_labelled(df)
+	#
+	
+	#_test_confidence_scores()
+	#_write_confidence_images()
 
-#_test_confidence_scores()
-#_write_confidence_images()
+if __name__ == "__main__":
+	main()
 
