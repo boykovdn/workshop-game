@@ -29,6 +29,8 @@ class Game:
 			self.dataframe_labels = pickle.load(pid)
 		self._get_bounding_boxes(self.current_imagepath.split("/")[-1])
 
+		self.color_boxtype_palette = [(0,0,255), (255,255,255), (0,255,0)]
+
 	def _get_bounding_boxes(self, imagename):
 		df = pd.DataFrame()
 		image_index = self.dataframe_labels.loc[self.dataframe_labels['filename'] == imagename].index.values.astype(int)[0]
@@ -39,16 +41,54 @@ class Game:
 			bounding_boxes.append(smallest_bounding_box(overlap))
 		self.current_bounding_boxes = bounding_boxes
 
-	def _check_correct(self, label_name):
+	def _format_box(self, pt1, pt2):
 		"""
-		Use disjoint sets algorithm to check for overlap with pre calculated boxes (which should represent the "true" locations)
+		Make sure first point is in upper left corner, and second in lower right
 		"""
-		# Transform to pixel coordinates in original image
-		(x1,y1), (x2,y2), _ = self.label_dict[label_name]
+		x1 = np.min([pt1[0], pt2[0]])
+		y1 = np.min([pt1[1], pt2[1]])
+		x2 = np.max([pt1[0], pt2[0]])
+		y2 = np.max([pt1[1], pt2[1]])
+
+		return (x1,y1),(x2,y2)
+
+	def _coords_to_original(self, pt1, pt2):
+		"""
+		Returns coordinates as would appear in the original (not rescaled) image
+		"""
+		(x1,y1),(x2,y2) = self._format_box(pt1,pt2)
 		x1_orig = int(x1 * (self.img_width_original/self.window_width))
 		y1_orig = int(y1 * (self.img_height_original/self.window_height))
 		x2_orig = int(x2 * (self.img_width_original/self.window_width))
 		y2_orig = int(y2 * (self.img_height_original/self.window_height))
+	
+		return (x1_orig, y1_orig), (x2_orig, y2_orig)
+
+	def _coords_from_original(self, pt1, pt2):
+		"""
+		Returnds coordinates as would appear in rescaled image (pass original coords)
+		"""
+		(x1,y1),(x2,y2) = self._format_box(pt1,pt2)
+		x1_resc = int(x1 * (self.window_width/self.img_width_original))
+		y1_resc = int(y1 * (self.window_height/self.img_height_original))
+		x2_resc = int(x2 * (self.window_width/self.img_width_original))
+		y2_resc = int(y2 * (self.window_height/self.img_height_original))
+	
+		return (x1_resc, y1_resc), (x2_resc, y2_resc)
+
+
+	def _get_overlap(self, pt1, pt2, original_coords=False):
+		"""
+		Use disjoint sets algorithm to check for overlap with pre calculated boxes (which should represent the "true" locations)
+		"""
+		# Transform to pixel coordinates in original image
+		if ~original_coords:
+			(x1,y1),(x2,y2) = self._format_box(pt1,pt2)
+			(x1_orig, y1_orig), (x2_orig, y2_orig) = self._coords_to_original((x1,y1), (x2, y2))
+		#x1_orig = int(x1 * (self.img_width_original/self.window_width))
+		#y1_orig = int(y1 * (self.img_height_original/self.window_height))
+		#x2_orig = int(x2 * (self.img_width_original/self.window_width))
+		#y2_orig = int(y2 * (self.img_height_original/self.window_height))
 		#TODO Fix formatting of dictionaries to use Filip's format
 		label_original = {}
 		label_original['x1'] = str(x1_orig)
@@ -56,7 +96,10 @@ class Game:
 		label_original['x2'] = str(x2_orig)
 		label_original['y2'] = str(y2_orig)
 
-		return overlap_test([label_original], self.current_bounding_boxes)
+		for box in self.current_bounding_boxes:
+			if overlap_test([label_original], [box]):
+				return box
+		return None
 
 	def _mouse_callback(self, event, x, y, flags, param):
 		"""
@@ -76,16 +119,31 @@ class Game:
 
 		elif event == cv2.EVENT_LBUTTONUP:
 			self.drawing = False
-			correct = False
+			#boxtype = 0 # 0:wrong, 1:correct, 2:answer box
+			correct=False
 			labelname = "label_{:02d}".format(self.label_index)
-			self._add_label(labelname, self.label_dict, (ix,iy), (x,y), correct=correct)
-			correct = self._check_correct(labelname)
-			self._add_label(labelname, self.label_dict, (ix,iy), (x,y), correct=correct)
+
+			overlapped_box = self._get_overlap((ix,iy),(x,y))
+			if overlapped_box is not None:
+				ix_ans = int(overlapped_box["x1"])
+				iy_ans = int(overlapped_box["y1"])
+				x_ans = int(overlapped_box["x2"])
+				y_ans = int(overlapped_box["y2"])
+				pt1, pt2 = self._coords_from_original((ix_ans, iy_ans),(x_ans, y_ans))
+				self._add_label("{}_ans".format(labelname), self.label_dict, pt1, pt2, boxtype=2, original_coords=True)
+				correct = True
+				print(overlapped_box)
+
 			print(correct)
+			if correct:
+				self._add_label(labelname, self.label_dict, (ix,iy), (x,y), boxtype=1)
+			else:
+				self._add_label(labelname, self.label_dict, (ix,iy), (x,y), boxtype=0)
+
 			self.label_index += 1
 			self._draw_labels()
 
-	def _add_label(self, labelname, label_dict, firstpoint, secondpoint, correct=False):
+	def _add_label(self, labelname, label_dict, firstpoint, secondpoint, boxtype=-1, original_coords=False):
 		"""
 		This function writes the label in a correct way to pass to other parts
 		of the script. Otherwise ix,iy will not always represent the upper left
@@ -95,15 +153,19 @@ class Game:
 		x,y = secondpoint
 		upper_left = (np.min([ix,x]), np.min([iy,y]))
 		lower_right = (np.max([ix,x]), np.max([iy,y]))
-		self.label_dict[labelname] = [upper_left, lower_right, correct]
+		self.label_dict[labelname] = [upper_left, lower_right, boxtype]
 		
 	def _draw_labels(self):
 		"""
 		Iterate through stored labels and put them on image
 		"""
 		for label_name in self.label_dict.keys():
-			(x1, y1), (x2, y2), _ = self.label_dict[label_name]
-			cv2.rectangle(self.img_background, (x1,y1), (x2,y2), (255,255,255), 2)
+			(x1, y1), (x2, y2), boxtype = self.label_dict[label_name]
+			color_tuple = self.color_boxtype_palette[boxtype]
+			if boxtype == 0 or boxtype == 2:
+				cv2.rectangle(self.img_background, (x1,y1), (x2,y2), color_tuple, 2)
+			elif boxtype == -1:
+				print("Error: uninitialised box?")
 
 	def run(self):
 		self.current_imagepath = self.current_imagepath
