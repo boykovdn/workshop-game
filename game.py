@@ -7,8 +7,8 @@ from locations import overlap_test, calculate_overlap, smallest_bounding_box
 class Game:
 
 	def __init__(self):
-		self.window_height = 600
-		self.window_width = 640
+		self.window_height = -1
+		self.window_width = -1
 		self.WINDOW_NAME = "test"
 		self.current_imagepath = './image_001.jpg'
 		self.current_bounding_boxes = []
@@ -43,7 +43,7 @@ class Game:
 		"""
 		Use disjoint sets algorithm to check for overlap with pre calculated boxes (which should represent the "true" locations)
 		"""
-		# Transform to pixel coordinats in original image
+		# Transform to pixel coordinates in original image
 		(x1,y1), (x2,y2), _ = self.label_dict[label_name]
 		x1_orig = int(x1 * (self.img_width_original/self.window_width))
 		y1_orig = int(y1 * (self.img_height_original/self.window_height))
@@ -70,7 +70,7 @@ class Game:
 
 		elif event == cv2.EVENT_MOUSEMOVE:
 			if self.drawing == True:
-				cv2.rectangle(self.img_drawing, (ix, iy), (x, y), (0,255,0), 1)
+				cv2.rectangle(self.img_drawing, (ix, iy), (x, y), (0,255,0), 2)
 				self.img_background_cache = self.img_drawing.copy()
 				self.img_drawing = self.img_background.copy()
 
@@ -78,12 +78,24 @@ class Game:
 			self.drawing = False
 			correct = False
 			labelname = "label_{:02d}".format(self.label_index)
-			self.label_dict[labelname] = [(ix, iy), (x, y), correct]
+			self._add_label(labelname, self.label_dict, (ix,iy), (x,y), correct=correct)
 			correct = self._check_correct(labelname)
-			self.label_dict[labelname] = [(ix, iy), (x, y), correct]
+			self._add_label(labelname, self.label_dict, (ix,iy), (x,y), correct=correct)
 			print(correct)
 			self.label_index += 1
 			self._draw_labels()
+
+	def _add_label(self, labelname, label_dict, firstpoint, secondpoint, correct=False):
+		"""
+		This function writes the label in a correct way to pass to other parts
+		of the script. Otherwise ix,iy will not always represent the upper left
+		corner and the other script won't work.
+		"""
+		ix,iy = firstpoint
+		x,y = secondpoint
+		upper_left = (np.min([ix,x]), np.min([iy,y]))
+		lower_right = (np.max([ix,x]), np.max([iy,y]))
+		self.label_dict[labelname] = [upper_left, lower_right, correct]
 		
 	def _draw_labels(self):
 		"""
@@ -91,12 +103,15 @@ class Game:
 		"""
 		for label_name in self.label_dict.keys():
 			(x1, y1), (x2, y2), _ = self.label_dict[label_name]
-			cv2.rectangle(self.img_background, (x1,y1), (x2,y2), (255,255,255), 1)
+			cv2.rectangle(self.img_background, (x1,y1), (x2,y2), (255,255,255), 2)
 
 	def run(self):
 		self.current_imagepath = self.current_imagepath
 		self.img_original = cv2.imread(self.current_imagepath)
 		(self.img_height_original, self.img_width_original, _) = self.img_original.shape
+		# Define window size by original image dim // scaling factor
+		self.window_height = self.img_height_original // 3
+		self.window_width = self.img_width_original // 3
 
 		self.img_background = cv2.resize(self.img_original, (self.window_width, self.window_height))
 		cv2.namedWindow('image')
