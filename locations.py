@@ -336,10 +336,30 @@ def save_images_loi(df):
 				#TODO Format json filename
 				json_output.write(json.dumps(bounding_box))
 				counter += 1
+	
+def filter_labels(df_labels, username_list):
+	"""
+	Leaves only labels made by users in username_list	
+	"""	
+	df_new = df_labels[['filename', 'labels']].copy()
+	for i in df_new.index:
+		oldlabels = df_new['labels'].iloc[i]
+		newlabels = []
 		
+		for label in oldlabels:
+			if label['username'] in username_list:
+				newlabels.append(label)
+
+		df_new['labels'].iloc[i] = newlabels
+
+	return df_new
 			
-def _test_confidence_scores():
+def _test_confidence_scores(username_list):
+	"""
+	Pass username_list to include only these people
+	"""
 	df = load_pickle(dataframe_pickle_labels_name)
+	df = filter_labels(df, username_list)
 	for i in range(0, df.index.size):
 		overlaps = calculate_overlap(df, i)
 		big_boxes = []
@@ -347,8 +367,12 @@ def _test_confidence_scores():
 			big_boxes.append(smallest_bounding_box(overlap))
 		show_image(label_image(df, i, labels=big_boxes, confidence=True))
 
-def _write_confidence_images(outdir="./images_confidence_score"):
+def _write_confidence_images(username_list, outdir="./images_confidence_score"):
+	"""
+	Pass username_list to include only these users
+	"""
 	df = load_pickle(dataframe_pickle_labels_name)
+	df = filter_labels(df, username_list)
 	for i in range(0, df.index.size):
 		overlaps = calculate_overlap(df, i)
 		big_boxes = []
@@ -367,10 +391,16 @@ def _get_linear_plot():
 
 def main():
 	#_get_linear_plot()
+	username_list = ['Boyko', 'Viola', 'JORAM', 'Tarsis', 'Kate']
 	
 	# Run to update local pickled dataframes from server
-	update_pickled_dataframe(dataframe_pickle_people_name)
-	update_pickled_dataframe(dataframe_pickle_labels_name)
+	#update_pickled_dataframe(dataframe_pickle_people_name)
+	#update_pickled_dataframe(dataframe_pickle_labels_name)
+	df = load_pickle(dataframe_pickle_labels_name)
+	#df_numbers = df[['Katenumber', 'Violanumber', 'JORAMnumber', 'Boykonumber', 'Tarsisnumber']].copy()
+	df_filtered = filter_labels(df, ['Boyko', 'Viola'])
+#	pd.plotting.scatter_matrix(df_numbers)
+#	plt.show()
 	
 	# Load from local - quicker
 	#df = load_pickle(dataframe_pickle_labels_name)
@@ -387,8 +417,8 @@ def main():
 	#save_images_labelled(df)
 	#
 	
-	#_test_confidence_scores()
-	#_write_confidence_images()
+#	_test_confidence_scores(username_list)
+	_write_confidence_images(username_list)
 
 if __name__ == "__main__":
 	main()
