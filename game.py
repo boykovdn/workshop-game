@@ -46,13 +46,17 @@ class Game:
 
 		self.color_boxtype_palette = [(0,0,255), (255,255,255), (0,255,0)]
 
-		ct = datetime.datetime.now()
-		currenttime = "{}{}{}{}{}{}{}".format(ct.year, ct.month, ct.day, ct.hour, ct.minute, ct.second, ct.microsecond)
+		currenttime = self.timestamp()
 		logdir = 'logs/{}_{}.log'.format(self.current_imagepath.split('/')[-1].split('.')[0], currenttime)
 		self.logid = open(logdir, 'w')
 		print("Writing to {}".format(logdir))
 		print(id(self))
-		self.logid.write('datetime,x,y,flag')
+		self.logid.write('datetime,x1,y1,x2,y2,flag\n')
+
+	def timestamp(self):
+		ct = datetime.datetime.now()
+		currenttime = "{}{}{}{}{}{}{}".format(ct.year, ct.month, ct.day, ct.hour, ct.minute, ct.second, ct.microsecond)
+		return currenttime
 
 	def close(self):
 		self.logid.close()
@@ -132,7 +136,15 @@ class Game:
 		"""
 		Helper function to manage adding labels to the log.
 		"""
-		self.logid.write("testing")
+		x1 = label[0][0]
+		y1 = label[0][1]
+		x2 = label[1][0]
+		y2 = label[1][1]
+		flag = label[2]
+		print(label)
+		currenttime = self.timestamp()
+		output = "{},{},{},{},{},{}\n".format(currenttime,x1,y1,x2,y2,flag)
+		self.logid.write(output)
 		self.logid.flush()
 
 	def _mouse_callback(self, event, x, y, flags, param):
