@@ -132,16 +132,23 @@ class Game:
 				return box
 		return None
 
-	def _add_log_label(self, label):
+	def _add_log_label(self, label, original_coords=False):
 		"""
 		Helper function to manage adding labels to the log.
+
+		By default it scales the coordinates up, because the displayed image is probably scaled down to fit a screen of certain size
 		"""
 		x1 = label[0][0]
 		y1 = label[0][1]
 		x2 = label[1][0]
 		y2 = label[1][1]
+		if ~original_coords:
+			x1 = int(x1 * (self.img_width_original / self.window_width))
+			y1 = int(y1 * (self.img_height_original / self.window_height))
+			x2 = int(x2 * (self.img_width_original / self.window_width))
+			y2 = int(y2 * (self.img_height_original / self.window_height))
 		flag = label[2]
-		print(label)
+		print(label) # testing
 		currenttime = self.timestamp()
 		output = "{},{},{},{},{},{}\n".format(currenttime,x1,y1,x2,y2,flag)
 		self.logid.write(output)
