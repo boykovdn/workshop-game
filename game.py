@@ -3,8 +3,21 @@ import numpy as np
 import pickle
 import pandas as pd
 import os
-import time
+import datetime
 from locations import overlap_test, calculate_overlap, smallest_bounding_box
+
+class closing(object):
+	def __init__(self, game):
+		self.game = game
+
+	def __enter__(self):
+		return self.game
+
+	def __exit__(self, *exc_info):
+		try:
+			self.game.close()
+		except AttributeError:
+			print("AttributeError when closing ####")
 
 class Game:
 
@@ -32,6 +45,18 @@ class Game:
 		self._get_bounding_boxes(self.current_imagepath.split("/")[-1])
 
 		self.color_boxtype_palette = [(0,0,255), (255,255,255), (0,255,0)]
+
+		ct = datetime.datetime.now()
+		currenttime = "{}{}{}{}{}{}{}".format(ct.year, ct.month, ct.day, ct.hour, ct.minute, ct.second, ct.microsecond)
+		logdir = 'logs/{}_{}.log'.format(self.current_imagepath.split('/')[-1].split('.')[0], currenttime)
+		self.logid = open(logdir, 'w')
+		print("Writing to {}".format(logdir))
+		print(id(self))
+		self.logid.write('datetime,x,y,flag')
+
+	def close(self):
+		self.logid.close()
+		print("CLOSED")
 
 	def _get_bounding_boxes(self, imagename):
 		df = pd.DataFrame()
@@ -103,6 +128,13 @@ class Game:
 				return box
 		return None
 
+	def _add_log_label(self, label):
+		"""
+		Helper function to manage adding labels to the log.
+		"""
+		self.logid.write("testing")
+		self.logid.flush()
+
 	def _mouse_callback(self, event, x, y, flags, param):
 		"""
 		INPUT: Standard inputs for mouse callback function in opencv
@@ -141,7 +173,6 @@ class Game:
 				self._add_label(labelname, self.label_dict, (ix,iy), (x,y), boxtype=1)
 			else:
 				self._add_label(labelname, self.label_dict, (ix,iy), (x,y), boxtype=0)
-
 			self.label_index += 1
 			print(self.label_dict)
 			self._draw_labels()
@@ -151,12 +182,16 @@ class Game:
 		This function writes the label in a correct way to pass to other parts
 		of the script. Otherwise ix,iy will not always represent the upper left
 		corner and the other script won't work.
+
+		It also adds a log entry that a label has been added. Labels are added after a mouse click.
 		"""
 		ix,iy = firstpoint
 		x,y = secondpoint
 		upper_left = (np.min([ix,x]), np.min([iy,y]))
 		lower_right = (np.max([ix,x]), np.max([iy,y]))
 		self.label_dict[labelname] = [upper_left, lower_right, boxtype]
+		
+		self._add_log_label(self.label_dict[labelname])
 		
 	def _draw_labels(self):
 		"""
@@ -200,5 +235,5 @@ for i in range(0, 10):
 	images_dir = "./images_game"	
 	images = os.listdir(images_dir)
 	imagepath = "{}/{}".format(images_dir, images[i])
-	game = Game(imagepath)
-	game.run()
+	with closing(Game(imagepath)) as game:
+		game.run()
