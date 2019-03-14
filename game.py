@@ -2,15 +2,17 @@ import cv2
 import numpy as np
 import pickle
 import pandas as pd
+import os
+import time
 from locations import overlap_test, calculate_overlap, smallest_bounding_box
 
 class Game:
 
-	def __init__(self):
+	def __init__(self, imagepath):
 		self.window_height = -1
 		self.window_width = -1
 		self.WINDOW_NAME = "test"
-		self.current_imagepath = './image_001.jpg'
+		self.current_imagepath = imagepath
 		self.current_bounding_boxes = []
 
 		self.drawing = False # True if mouse is pressed
@@ -141,6 +143,7 @@ class Game:
 				self._add_label(labelname, self.label_dict, (ix,iy), (x,y), boxtype=0)
 
 			self.label_index += 1
+			print(self.label_dict)
 			self._draw_labels()
 
 	def _add_label(self, labelname, label_dict, firstpoint, secondpoint, boxtype=-1, original_coords=False):
@@ -168,7 +171,6 @@ class Game:
 				print("Error: uninitialised box?")
 
 	def run(self):
-		self.current_imagepath = self.current_imagepath
 		self.img_original = cv2.imread(self.current_imagepath)
 		(self.img_height_original, self.img_width_original, _) = self.img_original.shape
 		# Define window size by original image dim // scaling factor
@@ -193,7 +195,10 @@ class Game:
 				break
 	
 		cv2.destroyAllWindows()
-		
 	
-game = Game()
-game.run()
+for i in range(0, 10):
+	images_dir = "./images_game"	
+	images = os.listdir(images_dir)
+	imagepath = "{}/{}".format(images_dir, images[i])
+	game = Game(imagepath)
+	game.run()
