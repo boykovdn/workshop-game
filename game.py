@@ -21,7 +21,7 @@ class closing(object):
 
 class Game:
 
-	def __init__(self, imagepath):
+	def __init__(self, imagepath, playername):
 		self.window_height = -1
 		self.window_width = -1
 		self.WINDOW_NAME = "test"
@@ -234,8 +234,11 @@ class Game:
 		self.img_background = cv2.resize(self.img_original, (self.window_width, self.window_height))
 		cv2.namedWindow('image')
 		cv2.setMouseCallback('image', self._mouse_callback)
-		
-
+	
+		#TODO Add exit/next keys
+		#TODO Add name prompt	
+		#TODO Next image via ENTER, quit via ESC
+		# Exercise to demonstrate 1) labelling process 2) training process 3?) zstacks
 		while(True):
 			while(self.drawing):
 				#TODO Fix green flicker
@@ -249,10 +252,11 @@ class Game:
 				break
 	
 		cv2.destroyAllWindows()
-	
-for i in range(0, 10):
-	images_dir = "./images_game"	
-	images = os.listdir(images_dir)
-	imagepath = "{}/{}".format(images_dir, images[i])
-	with closing(Game(imagepath)) as game:
-		game.run()
+
+def main():	
+	for i in range(0, 10):
+		images_dir = "./images_game"	
+		images = os.listdir(images_dir)
+		imagepath = "{}/{}".format(images_dir, images[i])
+		with closing(Game(imagepath)) as game:
+			game.run()
