@@ -50,9 +50,8 @@ class Game:
 		currenttime = self.timestamp()
 		logdir = 'logs/{}_{}_{}.log'.format(self.current_imagepath.split('/')[-1].split('.')[0], currenttime, self.playername)
 		self.logid = open(logdir, 'w')
-		print("Writing to {}".format(logdir))
-		print(id(self))
-		self.logid.write('datetime,x1,y1,x2,y2,flag,playername\n')
+		#print("Writing to {}".format(logdir))
+		self.logid.write('datetime,x1,y1,x2,y2,flag\n')
 
 	def timestamp(self):
 		ct = datetime.datetime.now()
@@ -149,7 +148,6 @@ class Game:
 			x2 = int(x2 * (self.img_width_original / self.window_width))
 			y2 = int(y2 * (self.img_height_original / self.window_height))
 		flag = label[2]
-		print(label) # testing
 		currenttime = self.timestamp()
 		output = "{},{},{},{},{},{}\n".format(currenttime,x1,y1,x2,y2,flag)
 		self.logid.write(output)
@@ -186,15 +184,15 @@ class Game:
 				pt1, pt2 = self._coords_from_original((ix_ans, iy_ans),(x_ans, y_ans))
 				self._add_label("{}_ans".format(labelname), self.label_dict, pt1, pt2, boxtype=2, original_coords=True)
 				correct = True
-				print(overlapped_box)
+				#print(overlapped_box)
 
-			print(correct)
+			#print(correct)
 			if correct:
 				self._add_label(labelname, self.label_dict, (ix,iy), (x,y), boxtype=1)
 			else:
 				self._add_label(labelname, self.label_dict, (ix,iy), (x,y), boxtype=0)
 			self.label_index += 1
-			print(self.label_dict)
+			#print(self.label_dict)
 			self._draw_labels()
 
 	def _add_label(self, labelname, label_dict, firstpoint, secondpoint, boxtype=-1, original_coords=False):
@@ -236,7 +234,7 @@ class Game:
 		cv2.namedWindow('image')
 		cv2.setMouseCallback('image', self._mouse_callback)
 	
-		#TODO Add exit/next keys
+		#TODO Upgrade nav keys to go back (optional)
 		#TODO Add name prompt	
 		#TODO Next image via ENTER, quit via ESC
 		# Exercise to demonstrate 1) labelling process 2) training process 3?) zstacks
