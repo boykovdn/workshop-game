@@ -22,6 +22,7 @@ class closing(object):
 class Game:
 
 	def __init__(self, imagepath, playername):
+		self.playername = playername
 		self.window_height = -1
 		self.window_width = -1
 		self.WINDOW_NAME = "test"
@@ -47,11 +48,11 @@ class Game:
 		self.color_boxtype_palette = [(0,0,255), (255,255,255), (0,255,0)]
 
 		currenttime = self.timestamp()
-		logdir = 'logs/{}_{}.log'.format(self.current_imagepath.split('/')[-1].split('.')[0], currenttime)
+		logdir = 'logs/{}_{}_{}.log'.format(self.current_imagepath.split('/')[-1].split('.')[0], currenttime, self.playername)
 		self.logid = open(logdir, 'w')
 		print("Writing to {}".format(logdir))
 		print(id(self))
-		self.logid.write('datetime,x1,y1,x2,y2,flag\n')
+		self.logid.write('datetime,x1,y1,x2,y2,flag,playername\n')
 
 	def timestamp(self):
 		ct = datetime.datetime.now()
@@ -240,23 +241,31 @@ class Game:
 		#TODO Next image via ENTER, quit via ESC
 		# Exercise to demonstrate 1) labelling process 2) training process 3?) zstacks
 		while(True):
+		# Exit on both ENTER or ESC keypresses 
 			while(self.drawing):
 				#TODO Fix green flicker
 				cv2.imshow('image', self.img_background_cache)
-				k = cv2.waitKey(1) & 0xFF
-				if k == 27:
+				key_press = cv2.waitKey(1) & 0xFF
+				if key_press == 27 or key_press == 13: 
 					break
 			cv2.imshow('image', self.img_background)	
-			k = cv2.waitKey(1) & 0xFF
-			if k == 27:
+			key_press = cv2.waitKey(1) & 0xFF
+			if key_press == 27 or key_press == 13:
 				break
 	
 		cv2.destroyAllWindows()
+		return key_press
 
 def main():	
+	playername = "testplayer"
 	for i in range(0, 10):
 		images_dir = "./images_game"	
 		images = os.listdir(images_dir)
 		imagepath = "{}/{}".format(images_dir, images[i])
-		with closing(Game(imagepath)) as game:
-			game.run()
+		with closing(Game(imagepath, playername)) as game:
+			key_press = game.run()
+			if key_press == 27:
+				break # Stop game
+
+if __name__ == "__main__":
+	main()
