@@ -70,7 +70,7 @@ def label_to_json_string(label_tuple):
 		"updated": label_tuple[8].strftime("%Y-%m-%d %H:%M:%S")
 	}
 
-	return json.dumps(label_dict)
+	return label_dict
 
 def get_labels_df():
 	ids_cursor = mydb.cursor()
@@ -104,9 +104,11 @@ def get_images_with_labels_df():
 		images_df.loc[images_df["image_id"] == image_id, "labels"] = labels
 
 	return images_df
-#read_json()
-#read_image_db()
-#get_images_with_labels_df()
 
+def main():
+	#read_json()
+	#read_image_db()
+	print(get_images_with_labels_df().to_json(path_or_buf="./from_local.json", orient='records'))
+	
 if __name__ == "__main__":
 	main()

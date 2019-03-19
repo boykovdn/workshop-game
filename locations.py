@@ -15,7 +15,8 @@ SERVER: Run and maintained by Filip Ayazi (fa344)
 """
 
 url_server = "https://filip.ayazi.sk/labeller/api.php?key=b7ca50e53329c&data&fbclid=IwAR3UNpOwXw3BaePHLMrsrKhKONRbx8AdbH7GOmYhEjA1P42jYqV3k44OUF0"
-images_dir = "./images"
+url_local = "./from_local.json"
+images_dir = "./images_ihi"
 images_dir_labels = "./images_labels"
 colourmap = "tab10"
 colours = {}
@@ -31,24 +32,30 @@ for i in range(0, len(cmap)):
 	print("Colour {} {}".format(i,colours[str(i)]))
 
 
-def load_labels(url=url_server, filename=None):
+def load_labels(url=url_server, filename=None, from_local=False):
 	"""
 	INPUT: url to download json from, or filename
 	OUTPUT: Dataframe read from json
 	"""
-	df = pd.DataFrame()
-	if filename is None:
-		try:
-			df = pd.read_json(url)
-			print("Read data from server")
-		except:
-			print("ERROR: Failed reading from server")
+
+	if from_local:
+		url = url_local
+		df = access.get_images_with_labels_df() # Gets them from local mysql server
+		print("Loading dataframe from local mysql server")
 	else:
-		try:
-			df = pd.read_json(filename)
-			print("Read data from {}".format(filename))
-		except:
-			print("Failed reading from {}".format(filename))
+		df = pd.DataFrame()
+		if filename is None:
+			try:
+				df = pd.read_json(url)
+				print("Read data from server")
+			except:
+				print("ERROR: Failed reading from server")
+		else:
+			try:
+				df = pd.read_json(filename)
+				print("Read data from {}".format(filename))
+			except:
+				print("Failed reading from {}".format(filename))
 
 	return df
 
@@ -116,7 +123,7 @@ def total_number_parasites(df):
 			
 	return df
 
-def label_image(df, loc, labels=[], confidence=False):
+def label_image(df, loc, labels=[], confidence=False, username_list=None):
 	"""
 	INPUT: index location of image in dataframe
 	OUTPUT: image with boxes drawn in, if lebels=True
@@ -131,6 +138,9 @@ def label_image(df, loc, labels=[], confidence=False):
 		print("Labelling individual people's boxes with different colours")
 		for i in range(0, len(names)):
 			name = names[i]
+			if username_list is not None:
+				if name not in username_list:
+					continue
 			# Draw locations:
 			for json in df[name].iloc[loc]:
 				x1 = int(json["x1"])
@@ -244,11 +254,11 @@ def calculate_overlap(df, image_number):
 	return final_lists
 
 
-def update_pickled_dataframe(outname):
+def update_pickled_dataframe(outname, from_local=False, url=url_server):
 	"""
 	Updates the local pickle of the dataframe, you can choose which one - there can be multiple that have different formats, and used for different parts of the script
 	"""
-	df_initial = load_labels()
+	df_initial = load_labels(from_local=from_local, url=url)
 	if outname == dataframe_pickle_people_name:
 		df = select_from_dataframe(df_initial)
 		df = people_to_cols(df)
@@ -302,7 +312,7 @@ def smallest_bounding_box(labels):
 	box = labels[0]
 	for i in range(1,len(labels)):
 		for tag in labels[i].keys():
-			box[tag] = box[tag] + "," + labels[i][tag]
+			box[tag] = str(box[tag]) + "," + str(labels[i][tag])
 
 	box["x1"] = str(x1_smallest)
 	box["y1"] = str(y1_smallest)
@@ -360,6 +370,7 @@ def _test_confidence_scores(username_list):
 	"""
 	df = load_pickle(dataframe_pickle_labels_name)
 	df = filter_labels(df, username_list)
+	print(df)
 	for i in range(0, df.index.size):
 		overlaps = calculate_overlap(df, i)
 		big_boxes = []
@@ -367,11 +378,12 @@ def _test_confidence_scores(username_list):
 			big_boxes.append(smallest_bounding_box(overlap))
 		show_image(label_image(df, i, labels=big_boxes, confidence=True))
 
-def _write_confidence_images(username_list, outdir="./images_confidence_score"):
+def _write_confidence_images(username_list, outdir="./images_confidence_score", picklename=dataframe_pickle_labels_name):
 	"""
 	Pass username_list to include only these users
 	"""
 	df = load_pickle(dataframe_pickle_labels_name)
+	print(df)
 	df = filter_labels(df, username_list)
 	for i in range(0, df.index.size):
 		overlaps = calculate_overlap(df, i)
@@ -391,14 +403,14 @@ def _get_linear_plot():
 
 def main():
 	#_get_linear_plot()
-	username_list = ['Boyko', 'Viola', 'JORAM', 'Tarsis', 'Kate']
+	username_list = ['Boyko_test']
 	
 	# Run to update local pickled dataframes from server
 	#update_pickled_dataframe(dataframe_pickle_people_name)
 	#update_pickled_dataframe(dataframe_pickle_labels_name)
-	df = load_pickle(dataframe_pickle_labels_name)
+#	df = load_pickle(dataframe_pickle_labels_name)
+	#df_people = load_pickle(dataframe_pickle_people_name)
 	#df_numbers = df[['Katenumber', 'Violanumber', 'JORAMnumber', 'Boykonumber', 'Tarsisnumber']].copy()
-	df_filtered = filter_labels(df, ['Boyko', 'Viola'])
 #	pd.plotting.scatter_matrix(df_numbers)
 #	plt.show()
 	
@@ -417,8 +429,9 @@ def main():
 	#save_images_labelled(df)
 	#
 	
-#	_test_confidence_scores(username_list)
-	_write_confidence_images(username_list)
+	_test_confidence_scores(username_list)
+#	_write_confidence_images(username_list, outdir="./images_ihi_confidence")
+#	show_image(label_image(df_people, 2, username_list=username_list))
 
 if __name__ == "__main__":
 	main()
