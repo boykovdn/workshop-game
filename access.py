@@ -1,5 +1,6 @@
 import mysql.connector 
-import json import pandas as pd
+import json 
+import pandas as pd
 
 mydb = mysql.connector.connect(
 	host="localhost",
