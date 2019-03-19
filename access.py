@@ -102,10 +102,10 @@ def get_images_with_labels_df():
 		labels = labels_df.loc[labels_df["image_id"] == image_id]["labels"]
 		images_df.loc[images_df["image_id"] == image_id, "labels"] = labels
 
-	print(images_df)
+	return images_df
 #read_json()
 #read_image_db()
-get_images_with_labels_df()
+#get_images_with_labels_df()
 
 if __name__ == "__main__":
 	main()
