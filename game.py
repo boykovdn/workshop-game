@@ -64,6 +64,7 @@ class Game:
 
 	def _get_bounding_boxes(self, imagename):
 		df = pd.DataFrame()
+		#print(self.dataframe_labels.loc[self.dataframe_labels['filename'])
 		image_index = self.dataframe_labels.loc[self.dataframe_labels['filename'] == imagename].index.values.astype(int)[0]
 		print("Labelling image {}".format(image_index))
 		overlaps = calculate_overlap(self.dataframe_labels, image_index)
